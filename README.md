@@ -1,1 +1,1 @@
-# Simple MANET/BRN simulator for my bachelor's thesis
+Simple MANET/BRN simulator for my bachelor's thesis
