@@ -28,6 +28,7 @@ colors = cmap.colors  # type: list
 
 number_of_nodes = 100
 nodes = []
+messages = []
 area = 600
 min_dist = 20
 radio_range = 100
@@ -98,6 +99,12 @@ def transmit(transmitter,message):
                 draw_arrow(transmitter,node2,message.hops%M)
                 pass
 
+def recieve(hops):
+    for message in messages:
+        if message.hops == hops:
+            for nodes in hops.nodes[hops]:
+                #calculate power
+                print("kakka")
 
 
                 
@@ -132,6 +139,7 @@ for node in nodes:
 
 #plot lines reprecenting channels between nodes
 message = Message(0,0,0)
+messages.append(message)
 #message2 = Message(0,1,0)
 nodes[2].messages.append(message)
 #nodes[3].messages.append(message2)
@@ -141,6 +149,8 @@ ax.add_patch(circle1)
 #ax.add_patch(circle2)
 for i in range(0,10):
     update(i)
+    recieve(i)
+
 
 plt.xlim(0,area)
 plt.ylim(0,area)
