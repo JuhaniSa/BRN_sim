@@ -28,7 +28,7 @@ class Node:
         self.y = y
         self.power = power
         self.messages = []
-        pass
+
 
 class Message:
     def __init__(self,hops,index,sent) -> None:
@@ -37,7 +37,7 @@ class Message:
         self.hops = hops
         self.sent = sent
         self.nodes = []
-        pass
+
 
 def create_nodes():
     for i in range(number_of_nodes):
@@ -82,10 +82,11 @@ def dist(node1,node2):
     return (math.sqrt((node1.x-node2.x)**2+(node1.y-node2.y)**2))
 
 def no_collision(message,node):
-    if len(node.messages)>0:
-        for msg in node.messages:
-            if message.hops == msg.hops:
-                return False
+    for mesg in node.messages:
+        a = mesg.hops
+        b = message.hops
+        if a==b:
+            return False
     else:
         return True
 
@@ -109,7 +110,6 @@ def add_message(node,id):
     message.nodes[0].append(node)
     node.messages.append(message)
 
-
 def recieve(hops,rx):
     tx_nodes = []
     final_tx_nodes = []
@@ -122,39 +122,36 @@ def recieve(hops,rx):
         power = 0.0
         for node in message.nodes[hops]:
             if in_range(node,rx):
-                if message not in rx.messages:
-                    if no_collision(message,rx):
+                if len(rx.messages) == 0:
+                    if message not in rx.messages:
                         #laske vastaanottoteho
                         r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
                         if r>0:
                             power = power + 1*1/(r**2)  
                             #tallenna lähettäjät
                             tx_nodes.append(node)
+                            
 
-                    elif message.hops>=0:
+                    else:
                         r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
-                        if r>0:
-                            if message in rx.messages:
+                        if message in rx.messages:
                                 rx.messages.remove(message)
-                            circle2 = plt.Circle((rx.x,rx.y),2,fill = False)
-                            ax.add_patch(circle2)
-                            tx_nodes.clear()
-                    
+                        tx_nodes.clear()
+                        final_tx_nodes.clear()
+                        no_rx = 1
 
-
-                    
         if len(tx_nodes)>0:
             rx.messages.append(message)
-
+            
             
     final_tx_nodes = tx_nodes
 
     if no_rx == 0:
         for node in final_tx_nodes:
-            #rx_message =copy.copy(message)
-            #rx_message.hops = message.hops +1
             draw_arrow(node,rx,hops)
             message.nodes[hops+1].append(rx)
+            
+            
 
 
 #create nodes
@@ -178,11 +175,9 @@ circle1 = plt.Circle((nodes[0].x,nodes[0].y),radio_range,fill = False)
 circle = plt.Circle((nodes[1].x,nodes[1].y),radio_range,fill = False)
 ax.add_patch(circle1)
 ax.add_patch(circle)
-
-for i in range(0,7):
+for i in range(0,5):
     for node in nodes:
-       recieve(i,node)
-    
+        recieve(i,node)
 
 
 
