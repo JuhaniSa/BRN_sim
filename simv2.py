@@ -23,10 +23,10 @@ M = 3
 
 
 class Node:
-    def __init__(self,x,y,power) -> None:
+    def __init__(self,x,y,pwr) -> None:
         self.x = x
         self.y = y
-        self.power = power
+        self.pwr = pwr
         self.messages = []
         self.tx_slots =[]
 
@@ -58,19 +58,33 @@ def create_nodes():
         nodes.append(node_)
         i += 1
 
-def test_nodes():
+def test_nodes1():
     node1 = Node(15,15,1)
     node2 = Node(45,45,3)
     node3 = Node(30,30,2)
-    #node4 = Node(35,25,4)
+    node4 = Node(35,25,4)
     node5 = Node(45,35,5)
     node6 = Node(25,25,5)
     nodes.append(node1)
     nodes.append(node2)
     nodes.append(node3)
-    #nodes.append(node4)
+    nodes.append(node4)
     nodes.append(node5)
     nodes.append(node6)
+
+def test_nodes2():
+    node1 = Node(15,15,1)
+    node2 = Node(20,20,3)
+    #node3 = Node(25,25,2)
+    #node4 = Node(35,35,4)
+    #node5 = Node(45,35,5)
+    #node6 = Node(25,25,5)
+    nodes.append(node1)
+    nodes.append(node2)
+    #nodes.append(node3)
+    #nodes.append(node4)
+    #nodes.append(node5)
+    #nodes.append(node6)
 
 def in_range(node1,node2):
     dist = (math.sqrt((node1.x-node2.x)**2+(node1.y-node2.y)**2))
@@ -124,38 +138,44 @@ def recieve(hops,rx):
                             if r>0:
                                 circle3 = plt.Circle((rx.x,rx.y),2,fill = False,color = colors[6])
                                 ax.add_patch(circle3)
-                                if message in rx.messages:
-                                    rx.messages.remove(message)
                                 tx_nodes.clear()
                                 final_tx_nodes.clear()
-                                
-
+                                power = 0
+                                if message in rx.messages:
+                                    rx.messages.remove(message)
 
                         #Jos vastaanottaja vastaanottaa toista viestiä
-                        if hops+1 in rx.tx_slots:
-                            #circle4 = plt.Circle((rx.x,rx.y),4,fill = False,color = colors[7])
-                            #ax.add_patch(circle4)
+                        if (hops+1) in rx.tx_slots:
+                            circle4 = plt.Circle((rx.x,rx.y),4,fill = False,color = colors[7])
+                            ax.add_patch(circle4)
                             if message in rx.messages:
                                 rx.messages.remove(message)
                             tx_nodes.clear()
                             final_tx_nodes.clear()
+                            rx.tx_slots.pop()
+                            power = 0
 
 
                         else:
-                            if r>0:
-                                power = power + 1*1/(r**2)  
-                                #tallenna    lähettäjät
-                                tx_nodes.append(node)
+                            power = power + 1*1/(r**2)  
+                            #tallenna lähettäjät
+                            tx_nodes.append(node)
 
         #Jos mahdollinen lähettäjä löytyy:   
-        if power>0:              
-            rx.tx_slots.append(hops+1)
-            rx.messages.append(message)
-            final_tx_nodes = tx_nodes
-            message.nodes[hops+1].append(rx)
+        if power>0:
+            if len(tx_nodes)>0:
+                if (hops)not in rx.tx_slots:             
+                    rx.tx_slots.append(hops+1)
+                    rx_message = message
+                    final_tx_nodes = tx_nodes
+                
 
-    for node in final_tx_nodes:
-        draw_arrow(node,rx,hops)
+    if len(final_tx_nodes)>0:
+        rx_message.nodes[hops+1].append(rx)
+        rx.messages.append(rx_message)
+        for node in final_tx_nodes:
+            draw_arrow(node,rx,hops)
+   
 
     
             
@@ -165,7 +185,11 @@ def recieve(hops,rx):
 
 #create nodes
 create_nodes()
-#test_nodes()
+#Törmäys nodessa:
+#test_nodes1()
+#Törmäys siirtotiessä:
+#test_nodes2()
+
                 
 
 
