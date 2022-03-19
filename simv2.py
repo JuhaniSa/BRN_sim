@@ -119,13 +119,16 @@ def recieve(hops,rx):
                 if r>0:
                     if message not in rx.messages:
                         #jos vastaanottaja lähettää samanaikaisesti
+                        r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
                         if hops in rx.tx_slots:
-                            circle3 = plt.Circle((rx.x,rx.y),2,fill = False,color = colors[6])
-                            ax.add_patch(circle3)
-                            if message in rx.messages:
-                                rx.messages.remove(message)
-                            tx_nodes.clear()
-                            final_tx_nodes.clear()
+                            if r>0:
+                                circle3 = plt.Circle((rx.x,rx.y),2,fill = False,color = colors[6])
+                                ax.add_patch(circle3)
+                                if message in rx.messages:
+                                    rx.messages.remove(message)
+                                tx_nodes.clear()
+                                final_tx_nodes.clear()
+                                
 
 
                         #Jos vastaanottaja vastaanottaa toista viestiä
@@ -139,10 +142,9 @@ def recieve(hops,rx):
 
 
                         else:
-                            r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
                             if r>0:
                                 power = power + 1*1/(r**2)  
-                                #tallenna lähettäjät
+                                #tallenna    lähettäjät
                                 tx_nodes.append(node)
 
         #Jos mahdollinen lähettäjä löytyy:   
@@ -190,8 +192,8 @@ for node in nodes:
     i = 0
     for message in node.messages:
         if len(node.tx_slots)>0:
-            text=('M:',message.index,'H:',node.tx_slots[i%len(node.tx_slots)])
-            plt.annotate(text,(node.x+0.5,node.y+i*0.7))
+            text='M:{} H:{}'.format(message.index,node.tx_slots[i])
+            plt.annotate(text,(node.x+0.5,node.y+i*0.8))
         i=i+1
 
 
