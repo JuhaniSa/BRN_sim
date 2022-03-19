@@ -7,7 +7,7 @@ from matplotlib.cm import get_cmap
 
 import random
 
-name = "Accent"
+name = "tab10"
 cmap = get_cmap(name)  # type: matplotlib.colors.ListedColormap
 colors = cmap.colors  # type: list
 
@@ -28,6 +28,7 @@ class Node:
         self.y = y
         self.power = power
         self.messages = []
+        self.tx_slots =[]
 
 
 class Message:
@@ -61,13 +62,13 @@ def test_nodes():
     node1 = Node(15,15,1)
     node2 = Node(45,45,3)
     node3 = Node(30,30,2)
-    node4 = Node(35,25,4)
+    #node4 = Node(35,25,4)
     node5 = Node(45,35,5)
     node6 = Node(25,25,5)
     nodes.append(node1)
     nodes.append(node2)
     nodes.append(node3)
-    nodes.append(node4)
+    #nodes.append(node4)
     nodes.append(node5)
     nodes.append(node6)
 
@@ -80,15 +81,6 @@ def in_range(node1,node2):
 
 def dist(node1,node2):
     return (math.sqrt((node1.x-node2.x)**2+(node1.y-node2.y)**2))
-
-def no_collision(message,node):
-    for mesg in node.messages:
-        a = mesg.hops
-        b = message.hops
-        if a==b:
-            return False
-    else:
-        return True
 
 def draw_arrow(tx,rx,color_index):
    offset = 0
@@ -103,12 +95,13 @@ def draw_arrow(tx,rx,color_index):
    plt.arrow(tx.x,tx.y,dx,dy,head_width = area/200,color = colors[color_index%len(colors)],length_includes_head = True)
 
 def add_message(node,id):
-    message = Message(0,id,0)
-    messages.append(message)
+    msg = Message(0,id,0)
+    messages.append(msg)
     lst = []
-    message.nodes.append(lst)
-    message.nodes[0].append(node)
-    node.messages.append(message)
+    msg.nodes.append(lst)
+    msg.nodes[0].append(node)
+    node.messages.append(msg)
+    node.tx_slots.append(0)
 
 def recieve(hops,rx):
     tx_nodes = []
@@ -122,34 +115,48 @@ def recieve(hops,rx):
         power = 0.0
         for node in message.nodes[hops]:
             if in_range(node,rx):
-                if len(rx.messages) == 0:
+                r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
+                if r>0:
                     if message not in rx.messages:
-                        #laske vastaanottoteho
-                        r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
-                        if r>0:
-                            power = power + 1*1/(r**2)  
-                            #tallenna lähettäjät
-                            tx_nodes.append(node)
-                            
-
-                    else:
-                        r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
-                        if message in rx.messages:
+                        #jos vastaanottaja lähettää samanaikaisesti
+                        if hops in rx.tx_slots:
+                            circle3 = plt.Circle((rx.x,rx.y),2,fill = False,color = colors[6])
+                            ax.add_patch(circle3)
+                            if message in rx.messages:
                                 rx.messages.remove(message)
-                        tx_nodes.clear()
-                        final_tx_nodes.clear()
-                        no_rx = 1
+                            tx_nodes.clear()
+                            final_tx_nodes.clear()
 
-        if len(tx_nodes)>0:
+
+                        #Jos vastaanottaja vastaanottaa toista viestiä
+                        if hops+1 in rx.tx_slots:
+                            #circle4 = plt.Circle((rx.x,rx.y),4,fill = False,color = colors[7])
+                            #ax.add_patch(circle4)
+                            if message in rx.messages:
+                                rx.messages.remove(message)
+                            tx_nodes.clear()
+                            final_tx_nodes.clear()
+
+
+                        else:
+                            r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
+                            if r>0:
+                                power = power + 1*1/(r**2)  
+                                #tallenna lähettäjät
+                                tx_nodes.append(node)
+
+        #Jos mahdollinen lähettäjä löytyy:   
+        if power>0:              
+            rx.tx_slots.append(hops+1)
             rx.messages.append(message)
-            
-            
-    final_tx_nodes = tx_nodes
-
-    if no_rx == 0:
-        for node in final_tx_nodes:
-            draw_arrow(node,rx,hops)
+            final_tx_nodes = tx_nodes
             message.nodes[hops+1].append(rx)
+
+    for node in final_tx_nodes:
+        draw_arrow(node,rx,hops)
+
+    
+            
             
             
 
@@ -179,6 +186,13 @@ for i in range(0,5):
     for node in nodes:
         recieve(i,node)
 
+for node in nodes:
+    i = 0
+    for message in node.messages:
+        if len(node.tx_slots)>0:
+            text=('M:',message.index,'H:',node.tx_slots[i%len(node.tx_slots)])
+            plt.annotate(text,(node.x+0.5,node.y+i*0.7))
+        i=i+1
 
 
 #draw map
