@@ -11,16 +11,13 @@ name = "tab10"
 cmap = get_cmap(name)  # type: matplotlib.colors.ListedColormap
 colors = cmap.colors  # type: list
 
-
-
-number_of_nodes = 40
+number_of_nodes = 100
 nodes = []
 messages = []
-area = 60
-min_dist = 3
+area = 100
+min_dist = 1
 radio_range = 15
 M = 3
-
 
 class Node:
     def __init__(self,x,y,pwr) -> None:
@@ -30,7 +27,6 @@ class Node:
         self.messages = []
         self.tx_slots =[]
 
-
 class Message:
     def __init__(self,hops,index,sent) -> None:
         self.sender = Node
@@ -38,7 +34,6 @@ class Message:
         self.hops = hops
         self.sent = sent
         self.nodes = []
-
 
 def create_nodes():
     for i in range(number_of_nodes):
@@ -108,14 +103,19 @@ def draw_arrow(tx,rx,color_index):
    dy =  dy1-math.sin(alpha)*offset*np.sign(rx.y-tx.y)
    plt.arrow(tx.x,tx.y,dx,dy,head_width = area/200,color = colors[color_index%len(colors)],length_includes_head = True)
 
-def add_message(node,id):
+def add_message(node,id,slot):
     msg = Message(0,id,0)
     messages.append(msg)
-    lst = []
-    msg.nodes.append(lst)
-    msg.nodes[0].append(node)
+    while len(msg.nodes)<slot+1:
+        lst = []
+        msg.nodes.append(lst)
+    msg.nodes[slot].append(node)
     node.messages.append(msg)
-    node.tx_slots.append(0)
+    node.tx_slots.append(slot)
+    circle1 = plt.Circle((node.x,node.y),0.5,fill = True)
+    circle = plt.Circle((node.x,node.y),0.5,fill = True)
+    ax.add_patch(circle1)
+    ax.add_patch(circle)
 
 def recieve(hops,rx):
     tx_nodes = []
@@ -176,52 +176,46 @@ def recieve(hops,rx):
         for node in final_tx_nodes:
             draw_arrow(node,rx,hops)
    
-
-    
-            
-            
-            
-
+def add_info():
+    for node in nodes:
+        i = 0
+        for message in node.messages:
+            if len(node.tx_slots)>0:
+                if len(node.tx_slots)>i:
+                    text='M:{} H:{}'.format(message.index,node.tx_slots[i])
+                    plt.annotate(text,(node.x+0.5,node.y+i*1.2))
+            i=i+1
 
 #create nodes
-create_nodes()
+#create_nodes()
 #Törmäys nodessa:
 #test_nodes1()
 #Törmäys siirtotiessä:
 #test_nodes2()
 
-                
 
-
-#plot nodes to area
-fig,ax = plt.subplots()
-for node in nodes:
-    plt.scatter(node.x,node.y,color= 'k')
-    #DEBUG Draw circle of minimum distance
-    #circle = plt.Circle((node.x,node.y),min_dist,fill = False)
-    #ax.add_patch(circle)
-
-#plot lines reprecenting channels between nodes
-add_message(nodes[0],1)
-add_message(nodes[1],2)
-circle1 = plt.Circle((nodes[0].x,nodes[0].y),radio_range,fill = False)
-circle = plt.Circle((nodes[1].x,nodes[1].y),radio_range,fill = False)
-ax.add_patch(circle1)
-ax.add_patch(circle)
-for i in range(0,5):
+for i in range(0,3):
+    plt.close()
+    nodes.clear()
+    messages.clear()
+    create_nodes()
+    fig,ax = plt.subplots()
     for node in nodes:
-        recieve(i,node)
+       plt.scatter(node.x,node.y,color= 'k')
+    add_message(nodes[0],1,0)
+    add_message(nodes[1],2,0)
+    add_message(nodes[2],3,1)
+    add_message(nodes[3],4,2)
+    for i in range(0,10):
+        for node in nodes:
+            recieve(i,node)
+    add_info()
+    plt.xlim(0,area)
+    plt.ylim(0,area)
+    plt.show()
 
-for node in nodes:
-    i = 0
-    for message in node.messages:
-        if len(node.tx_slots)>0:
-            text='M:{} H:{}'.format(message.index,node.tx_slots[i])
-            plt.annotate(text,(node.x+0.5,node.y+i*0.8))
-        i=i+1
+    
 
 
-#draw map
-plt.xlim(0,area)
-plt.ylim(0,area)
-plt.show()
+
+
