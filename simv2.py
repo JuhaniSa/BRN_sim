@@ -11,6 +11,8 @@ name = "tab10"
 cmap = get_cmap(name)  # type: matplotlib.colors.ListedColormap
 colors = cmap.colors  # type: list
 
+plot = False
+
 number_of_nodes = 100
 nodes = []
 messages = []
@@ -112,10 +114,11 @@ def add_message(node,id,slot):
     msg.nodes[slot].append(node)
     node.messages.append(msg)
     node.tx_slots.append(slot)
-    circle1 = plt.Circle((node.x,node.y),0.5,fill = True)
-    circle = plt.Circle((node.x,node.y),0.5,fill = True)
-    ax.add_patch(circle1)
-    ax.add_patch(circle)
+    if plot == True:
+        circle1 = plt.Circle((node.x,node.y),0.5,fill = True)
+        circle = plt.Circle((node.x,node.y),0.5,fill = True)
+        ax.add_patch(circle1)
+        ax.add_patch(circle)
 
 def recieve(hops,rx):
     tx_nodes = []
@@ -136,8 +139,9 @@ def recieve(hops,rx):
                         r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
                         if hops in rx.tx_slots:
                             if r>0:
-                                circle3 = plt.Circle((rx.x,rx.y),2,fill = False,color = colors[6])
-                                ax.add_patch(circle3)
+                                if plot == True:
+                                    circle3 = plt.Circle((rx.x,rx.y),2,fill = False,color = colors[6])
+                                    ax.add_patch(circle3)
                                 tx_nodes.clear()
                                 final_tx_nodes.clear()
                                 power = 0
@@ -146,8 +150,9 @@ def recieve(hops,rx):
 
                         #Jos vastaanottaja vastaanottaa toista viestiä
                         if (hops+1) in rx.tx_slots:
-                            circle4 = plt.Circle((rx.x,rx.y),4,fill = False,color = colors[7])
-                            ax.add_patch(circle4)
+                            if plot == True:
+                                circle4 = plt.Circle((rx.x,rx.y),4,fill = False,color = colors[7])
+                                ax.add_patch(circle4)
                             if message in rx.messages:
                                 rx.messages.remove(message)
                             tx_nodes.clear()
@@ -193,15 +198,16 @@ def add_info():
 #Törmäys siirtotiessä:
 #test_nodes2()
 
-
-for i in range(0,3):
-    plt.close()
+for i in range(0,100):
+    if plot == True:
+        plt.close()
+        fig,ax = plt.subplots()
     nodes.clear()
     messages.clear()
     create_nodes()
-    fig,ax = plt.subplots()
     for node in nodes:
-       plt.scatter(node.x,node.y,color= 'k')
+        if plot == True:
+            plt.scatter(node.x,node.y,color= 'k')
     add_message(nodes[0],1,0)
     add_message(nodes[1],2,0)
     add_message(nodes[2],3,1)
@@ -210,10 +216,11 @@ for i in range(0,3):
         for node in nodes:
             recieve(i,node)
     add_info()
-    plt.xlim(0,area)
-    plt.ylim(0,area)
-    plt.show()
-
+    if plot == True:
+        plt.xlim(0,area)
+        plt.ylim(0,area)
+        plt.show()
+    print(len(nodes))
     
 
 
