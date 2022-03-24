@@ -11,16 +11,18 @@ name = "tab10"
 cmap = get_cmap(name)  # type: matplotlib.colors.ListedColormap
 colors = cmap.colors  # type: list
 
-plot = False
+plot = True
 
-number_of_nodes = 100
+number_of_nodes = 30
 nodes = []
 messages = []
 area = 100
 min_dist = 1
-radio_range = 15
+radio_range = 40
 M = 3
 
+noise = 0
+rx_threshold = 0
 class Node:
     def __init__(self,x,y,pwr) -> None:
         self.x = x
@@ -51,7 +53,7 @@ def create_nodes():
         except Exception:
             continue
 
-        node_ = Node(x,y,i)
+        node_ = Node(x,y,10)
         nodes.append(node_)
         i += 1
 
@@ -71,15 +73,15 @@ def test_nodes1():
 
 def test_nodes2():
     node1 = Node(15,15,1)
-    node2 = Node(20,20,3)
-    #node3 = Node(25,25,2)
-    #node4 = Node(35,35,4)
+    node2 = Node(35,35,3)
+    node3 = Node(25,25,2)
+    node4 = Node(20,20,4)
     #node5 = Node(45,35,5)
     #node6 = Node(25,25,5)
     nodes.append(node1)
     nodes.append(node2)
-    #nodes.append(node3)
-    #nodes.append(node4)
+    nodes.append(node3)
+    nodes.append(node4)
     #nodes.append(node5)
     #nodes.append(node6)
 
@@ -103,7 +105,8 @@ def draw_arrow(tx,rx,color_index):
 
    dx =  dx1-math.cos(alpha)*offset*np.sign(rx.x-tx.x)
    dy =  dy1-math.sin(alpha)*offset*np.sign(rx.y-tx.y)
-   plt.arrow(tx.x,tx.y,dx,dy,head_width = area/200,color = colors[color_index%len(colors)],length_includes_head = True)
+   if plot == True:
+        plt.arrow(tx.x,tx.y,dx,dy,head_width = area/200,color = colors[color_index%len(colors)],length_includes_head = True)
 
 def add_message(node,id,slot):
     msg = Message(0,id,0)
@@ -145,16 +148,12 @@ def recieve(hops,rx):
                                 tx_nodes.clear()
                                 final_tx_nodes.clear()
                                 power = 0
-                                if message in rx.messages:
-                                    rx.messages.remove(message)
 
                         #Jos vastaanottaja vastaanottaa toista viestiä
                         if (hops+1) in rx.tx_slots:
                             if plot == True:
                                 circle4 = plt.Circle((rx.x,rx.y),4,fill = False,color = colors[7])
                                 ax.add_patch(circle4)
-                            if message in rx.messages:
-                                rx.messages.remove(message)
                             tx_nodes.clear()
                             final_tx_nodes.clear()
                             rx.tx_slots.pop()
@@ -181,48 +180,163 @@ def recieve(hops,rx):
         for node in final_tx_nodes:
             draw_arrow(node,rx,hops)
    
+def recieve2(hops,rx):
+    tx_nodes = []
+    final_tx_nodes = []
+    noise = 0
+    rx_power = 0.0
+    for message in messages:
+        if len(message.nodes)<= hops+1 :
+            message.nodes.append([])
+        power = 0.0
+        for node in message.nodes[hops]:
+            if in_range(node,rx):
+                r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
+                if r>0:
+                    if message not in rx.messages:
+                        #jos vastaanottaja lähettää samanaikaisesti
+                        r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
+                        if hops in rx.tx_slots:
+                            if r>0:
+                                if plot == True:
+                                    circle3 = plt.Circle((rx.x,rx.y),2,fill = False,color = colors[6])
+                                    ax.add_patch(circle3)
+                                tx_nodes.clear()
+                                final_tx_nodes.clear()
+                                
+
+                        #Jos vastaanottaja vastaanottaa toista viestiä
+                        if (hops+1) in rx.tx_slots:
+                            if plot == True:
+                                circle4 = plt.Circle((rx.x,rx.y),4,fill = False,color = colors[7])
+                                ax.add_patch(circle4)
+                            power =+ node.pwr/(r**2)  
+                            #tallenna lähettäjät
+                            tx_nodes.append(node)
+
+                        else:
+                            power =+ node.pwr/(r**2)  
+                            #tallenna lähettäjät
+                            tx_nodes.append(node)
+
+                    else:
+                        noise =+ node.pwr/(r*r)
+                        
+        #jos lähettäjiä                
+        if len(tx_nodes)>0:
+            #Jos vastaanotettava teho on suurempi kuin kohina
+            if power>(noise+rx_power):       
+                rx_message = message
+                final_tx_nodes.clear()
+                final_tx_nodes = tx_nodes.copy()
+                rx_power = power
+                rx.tx_slots.append(hops+1)
+                tx_nodes.clear()
+                power = 0
+            else:
+
+                power = 0
+                tx_nodes.clear()
+
+    if noise>rx_power:
+            final_tx_nodes.clear()
+            tx_nodes.clear()
+            #rx.tx_slots.pop()    
+
+    if len(final_tx_nodes)>0:
+        if rx_power>noise:
+            rx_message.nodes[hops+1].append(rx)
+            rx.messages.append(rx_message)
+            rx.tx_slots.append(hops+1)
+            for node in final_tx_nodes:
+                draw_arrow(node,rx,hops)
+
+def receive3(hops,rx):
+    noise = 0
+    rx_power = 0.0
+    rx_message = 0
+    final_tx_nodes = []
+    #Tarkasta, ettei vastaanottaja lähetä samainaikaisesti
+    if hops not in rx.tx_slots:
+        for message in messages:
+            tx_nodes = []
+            if len(message.nodes)<= hops+1 :
+                message.nodes.append([])
+            power = 0.0
+            for node in message.nodes[hops]:
+                if in_range(node,rx):
+                    r = (math.sqrt((node.x-rx.x)**2+(node.y-rx.y)**2))
+                    if r>0:
+                        if message not in rx.messages:
+                            power =+ node.pwr/(r*r)
+                            tx_nodes.append(node)
+                        if message in rx.messages:
+                            noise = node.pwr/(r*r)
+            #Valitaan uusi lähettäjien joukko, jos vastaanottoteho on riittävä
+            if power>(noise+rx_power):
+                noise = noise + rx_power
+                rx_power = power
+                final_tx_nodes = tx_nodes.copy()
+                tx_nodes.clear()
+                rx_message = message
+                power = 0
+
+      
+
+        #Uusi vastaanotettava viesti
+        if(rx_power<noise):    
+            final_tx_nodes.clear()
+
+    if len(final_tx_nodes)>0:
+        if rx_power>noise:
+            rx_message.nodes[hops+1].append(rx)
+            rx.messages.append(rx_message)
+            rx.tx_slots.append(hops+1)
+            for node in final_tx_nodes:
+                draw_arrow(node,rx,hops)
+
+        
+
 def add_info():
-    for node in nodes:
-        i = 0
-        for message in node.messages:
-            if len(node.tx_slots)>0:
-                if len(node.tx_slots)>i:
-                    text='M:{} H:{}'.format(message.index,node.tx_slots[i])
-                    plt.annotate(text,(node.x+0.5,node.y+i*1.2))
-            i=i+1
+    if plot == True:
+        for node in nodes:
+            i = 0
+            for message in node.messages:
+                if len(node.tx_slots)>0:
+                    if len(node.tx_slots)>i:
+                        text='M:{} H:{}'.format(message.index,node.tx_slots[i])
+                        plt.annotate(text,(node.x+0.5,node.y+i*1.2))
+                i=i+1
+
+def add_n_messages(count,same_slot):
+    if same_slot == True:
+        for i in range(0,count):
+            add_message(nodes[i],i,0)
+    if same_slot == False:
+         for i in range(0,count):
+            add_message(nodes[i],i,i)            
+
 
 #create nodes
 #create_nodes()
 #Törmäys nodessa:
-#test_nodes1()
+
 #Törmäys siirtotiessä:
 #test_nodes2()
 
-for i in range(0,100):
+nodes.clear()
+messages.clear()
+create_nodes()
+fig,ax = plt.subplots()
+for node in nodes:
     if plot == True:
-        plt.close()
-        fig,ax = plt.subplots()
-    nodes.clear()
-    messages.clear()
-    create_nodes()
-    for node in nodes:
-        if plot == True:
-            plt.scatter(node.x,node.y,color= 'k')
-    add_message(nodes[0],1,0)
-    add_message(nodes[1],2,0)
-    add_message(nodes[2],3,1)
-    add_message(nodes[3],4,2)
-    for i in range(0,10):
-        for node in nodes:
-            recieve(i,node)
-    add_info()
-    if plot == True:
-        plt.xlim(0,area)
-        plt.ylim(0,area)
-        plt.show()
-    print(len(nodes))
-    
-
-
-
-
+        plt.scatter(node.x,node.y,color= 'k')
+add_n_messages(2,True)
+for i in range(0,20):
+            for node in nodes:
+                receive3(i,node)
+add_info()
+if plot == True:
+    plt.xlim(0,area)
+    plt.ylim(0,area)
+    plt.show()
