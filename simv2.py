@@ -12,13 +12,13 @@ cmap = get_cmap(name)  # type: matplotlib.colors.ListedColormap
 colors = cmap.colors  # type: list
 
 plot = False
-# cooperation = True
-
-number_of_nodes = 50
 
 nodes = []
 messages = []
 
+
+#Simuloitavien solmujen lukumäärä
+number_of_nodes = 50
 area = 10000
 min_dist = 100
 radio_range = 15000
@@ -43,7 +43,7 @@ class Message:
         self.sent = sent
         self.nodes = []
 
-
+#Apufunktio solmujen luomiseen
 def create_nodes(num, pwr):
     for i in range(num):
         y = random.randint(0, area)
@@ -119,7 +119,7 @@ def draw_arrow(tx, rx, color_index):
         plt.arrow(tx.x, tx.y, dx, dy, head_width=area / 200, color=colors[color_index % len(colors)],
                   length_includes_head=True)
 
-
+#Apufunktio solmujen luomiseen
 def add_message(node, id, slot):
     msg = Message(0, id, 0)
     messages.append(msg)
@@ -178,7 +178,7 @@ def receive(hops, rx):
             for node in final_tx_nodes:
                 draw_arrow(node, rx, hops)
 
-
+#Lisää solmukohtaiset tiedot kuvaan
 def add_info():
     if plot == True:
         for node in nodes:
@@ -190,7 +190,7 @@ def add_info():
                         plt.annotate(text, (node.x + 0.5, node.y + i * area / 70))
                 i = i + 1
 
-
+#apufunktio usean solmun lisäämiseen
 def add_n_messages(count, same_slot):
     if same_slot == True:
         for i in range(0, count):
@@ -199,7 +199,7 @@ def add_n_messages(count, same_slot):
         for i in range(0, count):
             add_message(nodes[i], i, i)
 
-
+#Apufunktio kattavuuden laskemiseen
 def calculate_recieved(n_messages, nodes):
     received = 0
     for node in nodes:
@@ -234,6 +234,7 @@ if False == True:
     scatter_nodes()
     add_message(nodes[1], 0, 0)
     add_message(nodes[0], 1, 0)
+    #Simuloitavien aikaviipaleiden lukumäärä
     for i in range(0, 10):
         for node in nodes:
             receive(i, node)
@@ -260,6 +261,7 @@ if False == True:
                 scatter_nodes()
                 add_message(nodes[0], 0, 0)
                 add_message(nodes[1], 1, delay)
+                #Simuloitavien aikaviipaleiden lukumäärä
                 for i in range(0, 25):
                     for node in nodes:
                         receive(i, node)
@@ -288,6 +290,7 @@ if False == True:
             create_nodes(n_nodes, 15)
             scatter_nodes()
             add_message(nodes[0], 0, 0)
+            #Simuloitavien aikaviipaleiden lukumäärä
             for i in range(0, 25):
                 for node in nodes:
                     receive(i, node)
@@ -314,6 +317,7 @@ if False == True:
             create_nodes(60, 15)
             scatter_nodes()
             add_message(nodes[0], 0, 0)
+            #Simuloitavien aikaviipaleiden lukumäärä
             for i in range(0, n_slots):
                 for node in nodes:
                     receive(i, node)
@@ -342,6 +346,7 @@ if False == True:
                 create_nodes(n_nodes, 3)
                 scatter_nodes()
                 add_message(nodes[0], 0, 0)
+                #Simuloitavien aikaviipaleiden lukumäärä
                 for i in range(0, timeslots):
                     for node in nodes:
                         receive(i, node)
@@ -372,6 +377,7 @@ if True == True:
                 create_nodes(n_nodes, powers[pwr])
                 scatter_nodes()
                 add_message(nodes[0], 0, 0)
+                #Simuloitavien aikaviipaleiden lukumäärä
                 for i in range(0, 25):
                     for node in nodes:
                         receive(i, node)
